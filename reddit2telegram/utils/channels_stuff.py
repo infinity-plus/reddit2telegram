@@ -18,11 +18,11 @@ def get_config(config_filename=None):
 
 
 def import_submodule(submodule_name):
-    if os.path.isdir(os.path.join('channels', submodule_name)):
-        submodule = importlib.import_module(f'channels.{submodule_name}.app')
-    else:
-        submodule = DefaultChannel(submodule_name)
-    return submodule
+    return (
+        importlib.import_module(f'channels.{submodule_name}.app')
+        if os.path.isdir(os.path.join('channels', submodule_name))
+        else DefaultChannel(submodule_name)
+    )
 
 
 def set_new_channel(channel, **kwargs):
@@ -35,13 +35,14 @@ def set_new_channel(channel, **kwargs):
         return
     details = {
         'submodule': channel.lower(),
-        'channel': '@' + channel,
+        'channel': f'@{channel}',
         'subreddit': kwargs['subreddit'],
         'tags': kwargs['tags'].lower(),
         'min_upvotes_limit': kwargs.get('min_upvotes_limit', None),
         'submissions_ranking': kwargs.get('submissions_ranking', 'hot'),
-        'submissions_limit': kwargs.get('submissions_limit', 100)
+        'submissions_limit': kwargs.get('submissions_limit', 100),
     }
+
     channels.insert_one(details)
 
 

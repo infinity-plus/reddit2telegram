@@ -5,7 +5,7 @@ from utils import channels_stuff
 
 
 def main():
-    submodules_moved = list()
+    submodules_moved = []
     for submodule_path in glob('channels/*/'):
         submodule_name = submodule_path.split('/')[1].lower()
         print(submodule_name)
@@ -30,7 +30,7 @@ def main():
         # to_be_moved = True if to_be_moved == 'y' else to_be_moved
         if to_be_moved == 'STOP':
             break
-        if to_be_moved == True:
+        if to_be_moved:
             submodules_moved.append(submodule_name)
             submodule = channels_stuff.import_submodule(submodule_name)
             tags = ''
@@ -51,7 +51,7 @@ def main():
 
 
 def remove_dead_submodules():
-    submodules_moved = list()
+    submodules_moved = []
     for submodule_path in glob('~/reddit2telegram/reddit2telegram/channels/*/'):
         print(submodule_path)
         submodule_name = submodule_path.split('/')[-2].lower()

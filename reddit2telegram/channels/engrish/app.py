@@ -16,10 +16,7 @@ def send_post(submission, r2t):
     title = submission.title
     link = submission.shortlink
     fair = submission.link_flair_text
-    fair_text = ''
-    if fair is not None:
-        fair_text = '[{f}] '.format(f=fair)
-
+    fair_text = '[{f}] '.format(f=fair) if fair is not None else ''
     if submission.over_18:
         url = submission.url
         text = '🔞NSFW🔞\n{u}\n{f}{t}\n\n{l}\n\nby {c}'.format(

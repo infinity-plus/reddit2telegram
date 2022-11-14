@@ -25,7 +25,7 @@ def send_to_channel_from_subreddit(how_to_post, channel_to_post, subreddit, subm
     elif submissions_ranking == 'new':
         submissions = reddit.subreddit(subreddit).new(limit=submissions_limit)
     else:
-        logging.error('Unknown submissions_ranking. {}'.format(submissions_ranking))
+        logging.error(f'Unknown submissions_ranking. {submissions_ranking}')
     r2t = utils.Reddit2TelegramSender(channel_to_post, config)
     success = False
     for submission in submissions:
@@ -53,7 +53,7 @@ def send_to_channel_from_subreddit(how_to_post, channel_to_post, subreddit, subm
             # If None — do not want to send anything this time
             break
         else:
-            logging.error('Unknown SupplyResult. {}'.format(success))
+            logging.error(f'Unknown SupplyResult. {success}')
 
 
 @report_error
@@ -67,7 +67,7 @@ def supply(submodule_name, config, is_test=False):
     else:
         submissions_ranking = submissions_ranking_stated
     submissions_limit = getattr(submodule, 'submissions_limit', 100)
-    channel_to_post = submodule.t_channel if not is_test else '@r_channels_test'
+    channel_to_post = '@r_channels_test' if is_test else submodule.t_channel
     if no_chance_to_post_due_to_errors_cnt(utils.Reddit2TelegramSender(channel_to_post, config), channel_to_post):
         return
     success = send_to_channel_from_subreddit(how_to_post=submodule.send_post,

@@ -33,22 +33,20 @@ def send_post(submission, r2t):
     what, url, ext = get_url(submission)
     title = submission.title
     link = submission.shortlink
-    text = '{}\n\n/r/{}\n{}'.format(title, subreddit, link)
+    text = f'{title}\n\n/r/{subreddit}\n{link}'
 
     if what == 'text':
         punchline = submission.selftext
-        text = '{}\n\n{}\n\n/r/{}\n{}'.format(title, punchline, subreddit, link)
+        text = f'{title}\n\n{punchline}\n\n/r/{subreddit}\n{link}'
         return r2t.send_text(text)
     elif what == 'other':
         base_url = submission.url
-        text = '{}\n{}\n\n/r/{}\n{}'.format(title, base_url, subreddit, link)
+        text = f'{title}\n{base_url}\n\n/r/{subreddit}\n{link}'
         return r2t.send_text(text)
     elif what == 'album':
         base_url = submission.url
-        text = '{}\n{}\n\n/r/{}\n{}'.format(title, base_url, subreddit, link)
+        text = f'{title}\n{base_url}\n\n/r/{subreddit}\n{link}'
         r2t.send_text(text)
         return r2t.send_album(url)
     elif what in ('gif', 'img'):
         return r2t.send_gif_img(what, url, ext, text)
-    else:
-        pass

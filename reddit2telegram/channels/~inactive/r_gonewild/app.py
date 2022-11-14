@@ -86,23 +86,24 @@ def send_post(submission, r2t):
     # Get all data from submission that we need
     title = submission.title
     link = submission.shortlink
-    text = '{}\n{}'.format(title, link)
+    text = f'{title}\n{link}'
 
-    if what == 'text':
+    if (
+        what == 'text'
+        or what == 'other'
+        or what not in ('album', 'gif', 'img')
+    ):
         # If it is text submission, it is not really funny.
         # return r2t.send_text(submission.selftext)
-        return False
-    elif what == 'other':
-        # Also we are not interesting in any other content.
         return False
     elif what == 'album':
         # It is ok if it is an album.
         base_url = submission.url
-        text = '{}\n{}\n\n{}'.format(title, base_url, link)
+        text = f'{title}\n{base_url}\n\n{link}'
         r2t.send_text(text)
         r2t.send_album(url)
         return True
-    elif what in ('gif', 'img'):
+    else:
         # Also it is ok if it is gif or any kind of image.
 
         # Check if content has already appeared in
@@ -110,5 +111,3 @@ def send_post(submission, r2t):
         if r2t.dup_check_and_mark(url) is True:
             return False
         return r2t.send_gif_img(what, url, ext, text)
-    else:
-        return False

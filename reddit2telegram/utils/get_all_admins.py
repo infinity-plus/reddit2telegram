@@ -14,14 +14,14 @@ logger = logging.getLogger(__name__)
 
 
 def get_names(admins):
-    admins_names = list()
+    admins_names = []
     for admin in admins:
         admin_dict = admin.to_dict()
         user = admin_dict['user']
         if 'username' in user:
             username = user['username']
             if username != 'reddit2telegram_bot':
-                admins_names.append('@' + username)
+                admins_names.append(f'@{username}')
         else:
             admins_names.append('%NO_USERNAME%')
     return admins_names
@@ -38,7 +38,7 @@ def read_cron_and_get_admins(own_cron_filename, output_filename, config):
         tsv_writer = csv.DictWriter(output_admin_file, delimiter='\t', fieldnames=['SUBMODULE', 'CHANNEL', 'ADMINS'])
         tsv_writer.writeheader()
         for row in tsv_reader:
-            submodule = importlib.import_module('channels.{}.app'.format(row['submodule_name']))
+            submodule = importlib.import_module(f"channels.{row['submodule_name']}.app")
             channel = submodule.t_channel
             results = {
                 'CHANNEL': channel,

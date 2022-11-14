@@ -28,16 +28,14 @@ def send_report_to_dev_chat(exc):
     link = None
     r2t = utils.Reddit2TelegramSender(config['telegram']['dev_chat'], config)
     frame = sys.exc_info()[2]
-    frame = frame.tb_next
-    while frame:
+    while frame := frame.tb_next:
         local_vars = frame.tb_frame.f_locals
         if ('submodule_name' in local_vars) and ('submodule' in local_vars):
             submodule = local_vars['submodule_name']
             channel = local_vars['submodule'].t_channel
-            title = 'submodule: {}\nchannel: {}'.format(submodule, channel)
+            title = f'submodule: {submodule}\nchannel: {channel}'
         if 'submission' in local_vars:
             link = local_vars['submission'].shortlink
-        frame = frame.tb_next
     if link is not None:
         error_cnt = r2t.store_error_link(channel, link)
         title = '{title}\nlink: {link}\nerror_cnt: {cnt}'.format(

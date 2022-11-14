@@ -23,7 +23,7 @@ def update_promotion_order():
     first_date_view = db['view_with_first_dates']
     all_submodules = get_all_public_submodules()
     all_submodules.remove('reddit2telegram')
-    submodules_and_dates = dict()
+    submodules_and_dates = {}
     for submodule in all_submodules:
         imported = utils.channels_stuff.import_submodule(submodule)
         channel = imported.t_channel
@@ -32,12 +32,15 @@ def update_promotion_order():
             continue
         submodules_and_dates[submodule] = first_date_result['first_date']
     if settings.find_one({'setting': SETTING_NAME}) is None:
-        settings.insert_one({
-            'setting': SETTING_NAME,
-            'promotion_order': submodules_and_dates,
-            'already_promoted': list(),
-            'counter': 0
-        })
+        settings.insert_one(
+            {
+                'setting': SETTING_NAME,
+                'promotion_order': submodules_and_dates,
+                'already_promoted': [],
+                'counter': 0,
+            }
+        )
+
     settings.find_one_and_update(
         {
             'setting': SETTING_NAME
@@ -74,17 +77,8 @@ def what_submodule():
 
     # If every is promoted.
     settings.find_one_and_update(
-        {
-            'setting': SETTING_NAME
-        },
-        {
-            '$inc': {
-                'counter': 1
-            },
-            '$set': {
-                'already_promoted': list()
-            }
-        }
+        {'setting': SETTING_NAME},
+        {'$inc': {'counter': 1}, '$set': {'already_promoted': []}},
     )
 
 
@@ -109,16 +103,16 @@ def get_tags(submodule_name_to_promte):
 
 def make_nice_submission(submission, r2t, submodule_name_to_promte, extra_ending=None, **kwargs):
     tags = get_tags(submodule_name_to_promte)
-    tags_string = ''
-    if tags is not None:
-        if len(tags) > 0:
-            tags_string = ' '.join(tags)
+    tags_string = ' '.join(tags) if tags is not None and len(tags) > 0 else ''
     if extra_ending is None:
         extra_ending = ''
     submission.title  # to make it non-lazy
-    result = r2t.send_simple(submission,
+    return r2t.send_simple(
+        submission,
         channel_to_promote=what_channel(submodule_name_to_promte),
-        date=datetime.utcfromtimestamp(submission.created_utc).strftime('%Y %b %d'),
+        date=datetime.utcfromtimestamp(submission.created_utc).strftime(
+            '%Y %b %d'
+        ),
         tags=tags_string,
         extra_ending=extra_ending,
         text='{title}\n\n{self_text}\n\n{upvotes} upvotes\n/r/{subreddit_name}\n{date}\n{short_link}\nby {channel_to_promote}\n{tags}\n\n{extra_ending}',
@@ -127,9 +121,8 @@ def make_nice_submission(submission, r2t, submodule_name_to_promte, extra_ending
         gif='{title}\n\n{upvotes} upvotes\n/r/{subreddit_name}\n{date}\n{short_link}\nby {channel_to_promote}\n{tags}\n\n{extra_ending}',
         img='{title}\n\n{upvotes} upvotes\n/r/{subreddit_name}\n{date}\n{short_link}\nby {channel_to_promote}\n{tags}\n\n{extra_ending}',
         video='{title}\n\n{upvotes} upvotes\n/r/{subreddit_name}\n{date}\n{short_link}\nby {channel_to_promote}\n{tags}\n\n{extra_ending}',
-        gallery='{title}\n\n{upvotes} upvotes\n/r/{subreddit_name}\n{date}\n{short_link}\nby {channel_to_promote}\n{tags}\n\n{extra_ending}'
+        gallery='{title}\n\n{upvotes} upvotes\n/r/{subreddit_name}\n{date}\n{short_link}\nby {channel_to_promote}\n{tags}\n\n{extra_ending}',
     )
-    return result
 
 
 submodule_name_to_promte = what_submodule()

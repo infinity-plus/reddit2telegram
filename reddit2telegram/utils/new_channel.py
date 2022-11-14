@@ -27,19 +27,17 @@ def send_post(submission, r2t):
     with open(os.path.join(channel_dir, 'tags.txt'), 'w') as tags_file:
         tags_file.write(tags.lower())
 
-    readme_string = '| [/r/{sub_name}](https://www.reddit.com/r/{sub_name}/) | [@{channel_name}](https://t.me/{channel_name}) | 1 hour |'.format(
-        sub_name=sub,
-        channel_name=channel
+    return '| [/r/{sub_name}](https://www.reddit.com/r/{sub_name}/) | [@{channel_name}](https://t.me/{channel_name}) | 1 hour |'.format(
+        sub_name=sub, channel_name=channel
     )
-    return readme_string
 
 
 def run_script(channel):
-    os.system('python supplier.py --sub ' + channel.lower())
+    os.system(f'python supplier.py --sub {channel.lower()}')
 
 
 def add_to_git(channel):
-    os.system('git add channels/' + channel.lower() + '/*')
+    os.system(f'git add channels/{channel.lower()}/*')
 
 
 def commit(channel):
@@ -59,7 +57,7 @@ def old_fashioned_way():
     run_script(channel_name)
     print('Done.')
 
-    for i in range(10):
+    for _ in range(10):
         yes = input('Ready to commit? ')
         if yes == 'y':
             print('Add to git.')

@@ -42,7 +42,7 @@ def get_all_public_submodules(config_filename=None):
 
 def get_all_public_channels(r2t, config_filename=None):
     all_submodules = get_all_submodules(config_filename)
-    channels_and_dates = dict()
+    channels_and_dates = {}
     for submodule_name in all_submodules:
         submodule = utils.channels_stuff.import_submodule(submodule_name)
         channel_name = submodule.t_channel
@@ -58,9 +58,10 @@ def get_all_public_channels(r2t, config_filename=None):
 def generate_list_of_channels(channels_list, random_permutation=False):
     if random_permutation:
         channels_list = random.sample(channels_list, k=len(channels_list))
-    list_of_channels = ['{n}. {channel}'.format(n=str(i + 1).zfill(2), channel=channel)
-                        for i, channel in enumerate(channels_list)]
-    return list_of_channels
+    return [
+        '{n}. {channel}'.format(n=str(i + 1).zfill(2), channel=channel)
+        for i, channel in enumerate(channels_list)
+    ]
 
 
 def get_active_period(r2t, channel_name):
@@ -74,12 +75,11 @@ def get_active_period(r2t, channel_name):
 
 def get_last_members_cnt(r2t, channel_name):
     count_cursor = r2t.stats.find({'channel': channel_name.lower()}).sort([('ts', pymongo.DESCENDING)]).limit(1)
-    last_cnt = count_cursor.next()['members_cnt']
-    return last_cnt
+    return count_cursor.next()['members_cnt']
 
 
 def get_newly_active(r2t, channels_list):
-    newly_active = list()
+    newly_active = []
     for channel in channels_list:
         days_active = get_active_period(r2t, channel)
         if days_active <= 31:
@@ -97,8 +97,8 @@ def no_chance_to_post_due_to_errors_cnt(r2t, channel_name):
     channel_name = channel_name.lower()
     how_many = number_of_errors_over_month(r2t, channel_name)
     r2t.t_channel = get_dev_channel()
-    
-    text_to_send = channel_name + ': <b>' + str(how_many) + '</b> → '
+
+    text_to_send = f'{channel_name}: <b>{str(how_many)}</b> → '
     if how_many <= 12:
         # Send!
         probability_to_fail = 0.0
@@ -109,8 +109,8 @@ def no_chance_to_post_due_to_errors_cnt(r2t, channel_name):
     chance = random.random()
     if chance < probability_to_fail:
         # Not send.
-        text_to_send += '<b>' + str(round(probability_to_fail, 2)) + '</b> > '
-        text_to_send += '<b>' + str(round(chance, 2)) + '</b>.'
+        text_to_send += f'<b>{str(round(probability_to_fail, 2))}</b> > '
+        text_to_send += f'<b>{str(round(chance, 2))}</b>.'
         r2t.send_text(text_to_send, parse_mode='HTML')
         return True
     else:
@@ -125,14 +125,11 @@ def number_of_errors_over_month(r2t, channel):
         'channel': channel,
         'ts': {'$gte': one_month_ago}
     })
-    errors_cnt = 0
-    for error_record in month_ago_cursor:
-        errors_cnt += error_record['cnt']
-    return errors_cnt
+    return sum(error_record['cnt'] for error_record in month_ago_cursor)
 
 
 def get_top_diff_for_last_week(r2t, channels_list):
-    top_growers = dict()
+    top_growers = {}
     one_week_ago = datetime.datetime.utcnow() - datetime.timedelta(days=7)
     for channel in channels_list:
         week_ago_cursor = r2t.stats.find({
@@ -162,11 +159,11 @@ def is_birthday_today(r2t, channel_name):
     first_record_cursor = r2t.stats.find({
         'channel': channel_name.lower()
     }).sort([('ts', pymongo.ASCENDING)]).limit(5)
-    birth_date = None
-    for record in first_record_cursor:
-        if 'ts' in record:
-            birth_date = record['ts']
-            break
+    birth_date = next(
+        (record['ts'] for record in first_record_cursor if 'ts' in record),
+        None,
+    )
+
     if birth_date is None:
         return False, None
     year_diff = today.year - birth_date.year
@@ -177,8 +174,11 @@ def is_birthday_today(r2t, channel_name):
 
 
 def default_ending():
-    text_to_send = '🙋\nQ: How can I help?\nA: Support us on Patreon and promote your favorite channels!\n\n'
-    text_to_send += 'Q: How to make similar channels?\nA: Ask at @r_channels or use manual at https://github.com/Fillll/reddit2telegram.\n\n'
+    text_to_send = (
+        '🙋\nQ: How can I help?\nA: Support us on Patreon and promote your favorite channels!\n\n'
+        + 'Q: How to make similar channels?\nA: Ask at @r_channels or use manual at https://github.com/Fillll/reddit2telegram.\n\n'
+    )
+
     text_to_send += 'Q: Where to donate?\nA: Patreon: https://www.patreon.com/reddit2telegram. Other ways: https://bit.ly/r2t_donate.'
     return text_to_send
 

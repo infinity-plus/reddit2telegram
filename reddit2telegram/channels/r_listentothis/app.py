@@ -29,7 +29,7 @@ def send_post(submission, r2t):
 
     title = submission.title
     link = submission.shortlink
-    text = '{}\n{}'.format(title, link)
+    text = f'{title}\n{link}'
 
     if what == 'text':
         # If it is text submission, it is not really funny.
@@ -37,12 +37,12 @@ def send_post(submission, r2t):
         # return False
     elif what == 'other':
         # Also we are not interesting in any other content.
-        text = '{}\n{}\n\n{}'.format(title, url, link)
+        text = f'{title}\n{url}\n\n{link}'
         return r2t.send_text(text)
     elif what == 'album':
         # It is ok if it is an album.
         base_url = submission.url
-        text = '{}\n{}\n\n{}'.format(title, base_url, link)
+        text = f'{title}\n{base_url}\n\n{link}'
         r2t.send_text(text)
         return r2t.send_album(url)
     elif what in ('gif', 'img'):

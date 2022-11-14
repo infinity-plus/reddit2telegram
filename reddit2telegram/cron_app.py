@@ -43,14 +43,14 @@ def _process_single_entry(
 def read_own_cron(own_cron_filename, config):
     with open(own_cron_filename) as tsv_file:
         tsv_reader = csv.DictReader(tsv_file, delimiter='\t')
-        list_of_processes_to_start = list()
+        list_of_processes_to_start = []
         for row in tsv_reader:
             now = datetime.datetime.now()
             cron = croniter(row['MASK'])
             prev_run = cron.get_prev(datetime.datetime)
             diff = now - prev_run
             diff_seconds = diff.total_seconds()
-            if 0.0 <= diff_seconds and diff_seconds <= 59.9:
+            if 0.0 <= diff_seconds <= 59.9:
                 submodule_name = row['submodule_name'].split('\t')[0]
                 list_of_processes_to_start.append(submodule_name)
     random.shuffle(list_of_processes_to_start)

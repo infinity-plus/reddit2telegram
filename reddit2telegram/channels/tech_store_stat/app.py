@@ -155,7 +155,7 @@ def send_post(submission, r2t):
     number_of_modules = len(all_submodules)
     # sleep_coef = math.log(450 / number_of_modules) / math.log(2.718281828 / 3.14159)
     sleep_coef = 2000 / 3 / 2 / number_of_modules
-    channels_stat = dict()
+    channels_stat = {}
     for submodule_name in random.sample(all_submodules, k=number_of_modules):
         short_sleep(sleep_coef)
         submodule = utils.channels_stuff.import_submodule(submodule_name)
@@ -196,7 +196,7 @@ def send_post(submission, r2t):
         else:
             # If they pass something special
             for achievement in GREAT_ACHIEVEMENTS:
-                if (prev_members_cnt < achievement) and (achievement <= current_members_cnt):
+                if prev_members_cnt < achievement <= current_members_cnt:
                     # Achievement reached
                     r2t.send_text('🏆 {channel}\n{n1} ➡️ {n2}'.format(
                         n1=prev_members_cnt,
@@ -213,7 +213,7 @@ def send_post(submission, r2t):
                     else:
                         # Was already archived
                         long_sleep()
-        
+
         r2t.stats.insert_one(stat_to_store)
 
     members_diff = total['members'] - total['prev_members']
@@ -225,8 +225,11 @@ def send_post(submission, r2t):
     else:
         sign = '+'
 
-    text_to_send = 'Ok, regular bypass results.\n\n'
-    text_to_send += '<pre>Active channels: {n}.</pre>\n'.format(n=total['channels'])
+    text_to_send = (
+        'Ok, regular bypass results.\n\n'
+        + '<pre>Active channels: {n}.</pre>\n'.format(n=total['channels'])
+    )
+
     text_to_send += '<pre>Subscribers: {n}.</pre>\n'.format(n=total['members'])
     text_to_send += '<pre>Cnt diff: {sign}{diff} ({sign}{perc_diff}%).</pre>\n'.format(
         n=total['members'],
