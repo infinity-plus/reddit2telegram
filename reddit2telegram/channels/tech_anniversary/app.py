@@ -65,8 +65,9 @@ def send_post(submission, r2t):
                     submissions_limit=1000,
                     config=config,
                     extra_args=True,
-                    extra_ending=text_to_send
+                    extra_ending=text1_to_send,
                 )
+
                 long_sleep()
     # It's not a proper supply, so just stop.
     return SupplyResult.STOP_THIS_SUPPLY

@@ -17,7 +17,7 @@ def send_post(submission, r2t):
 
     fullTitle = submission.title
     link = submission.shortlink
-    
+
     try:
         flair = str(submission.link_flair_text)
     except:
@@ -59,16 +59,18 @@ def send_post(submission, r2t):
     if title.startswith('"') and title.endswith('"'):
         title = title[1:-1]
 
-    if artist != "":
-        text = '<b>{title}</b>\n<i>{artist}</i>\n\n▶️ {link}\n🎵 {channel}'.format(
-                title=title, artist=artist, link=link, channel=t_channel)
-    else:
-        text = '<b>{title}</b>\n\n▶️ {link}\n🎵 {channel}'.format(
-                title=title, link=link, channel=t_channel)
+    if what != 'img':
+        return SupplyResult.DO_NOT_WANT_THIS_SUBMISSION
+    if r2t.dup_check_and_mark(url) is True:
+        return SupplyResult.DO_NOT_WANT_THIS_SUBMISSION
+    text = (
+        '<b>{title}</b>\n<i>{artist}</i>\n\n▶️ {link}\n🎵 {channel}'.format(
+            title=title, artist=artist, link=link, channel=t_channel
+        )
+        if artist != ""
+        else '<b>{title}</b>\n\n▶️ {link}\n🎵 {channel}'.format(
+            title=title, link=link, channel=t_channel
+        )
+    )
 
-    if what == 'img':
-        if r2t.dup_check_and_mark(url) is True:
-            return SupplyResult.DO_NOT_WANT_THIS_SUBMISSION
-        return r2t.send_gif_img(what, url, text, parse_mode='HTML')
-    else:
-      return SupplyResult.DO_NOT_WANT_THIS_SUBMISSION
+    return r2t.send_gif_img(what, url, text, parse_mode='HTML')

@@ -46,9 +46,7 @@ def send_post(submission, r2t):
     text += link
 
     # How to send a post
-    if what == 'text':
-        return r2t.send_text(text) # returns True
-    elif what == 'other':
+    if what in ['text', 'other']:
         return r2t.send_text(text) # returns True
     elif what == 'album':
         r2t.send_text(text)

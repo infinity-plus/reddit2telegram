@@ -16,19 +16,19 @@ def send_post(submission, r2t):
     what, url, ext = get_url(submission)
     title = submission.title
     link = submission.shortlink
-    text = '{}\n{}'.format(title, link)
+    text = f'{title}\n{link}'
 
     if what == 'text':
         punchline = submission.selftext
-        text = '{}\n\n{}\n\n{}'.format(title, punchline, link)
+        text = f'{title}\n\n{punchline}\n\n{link}'
         return r2t.send_text(text)
     elif what == 'other':
         base_url = submission.url
-        text = '{}\n{}\n\n{}'.format(title, base_url, link)
+        text = f'{title}\n{base_url}\n\n{link}'
         return r2t.send_text(text)
     elif what == 'album':
         base_url = submission.url
-        text = '{}\n{}\n\n{}'.format(title, base_url, link)
+        text = f'{title}\n{base_url}\n\n{link}'
         r2t.send_text(text)
         r2t.send_album(url)
         return True

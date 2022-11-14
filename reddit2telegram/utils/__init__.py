@@ -75,21 +75,18 @@ def get_url(submission, mp4_instead_gif=True):
     
     def what_is_inside(url):
         header = requests.head(url).headers
-        if 'Content-Type' in header:
-            return header['Content-Type']
-        else:
-            return ''
+        return header['Content-Type'] if 'Content-Type' in header else ''
 
     # If reddit native gallery
     if hasattr(submission, 'gallery_data'):
-        dict_of_dicts_of_pics = dict()
-        list_of_media = dict()
+        dict_of_dicts_of_pics = {}
+        list_of_media = {}
         for item in submission.gallery_data['items']:
             list_of_media[item['id']] = item['media_id']
         counter = 0
         for item in sorted(list_of_media.items(), key=lambda item: item[0]):
             if counter % 10 == 0:
-                dict_of_dicts_of_pics[counter // 10] = dict()
+                dict_of_dicts_of_pics[counter // 10] = {}
             item_with_media = submission.media_metadata[item[1]]['s']
             if 'u' in item_with_media:
                 # It's a pic
@@ -103,21 +100,20 @@ def get_url(submission, mp4_instead_gif=True):
     url = submission.url
     url_content = what_is_inside(url)
 
-    if submission.is_video:
-        if 'reddit_video' in submission.media:
-            if submission.media['reddit_video'].get('is_gif', False):
-                return TYPE_GIF, submission.media['reddit_video']['fallback_url']
-            return TYPE_VIDEO, submission.media['reddit_video']['fallback_url']
-            # return TYPE_OTHER, url
-
+    if submission.is_video and 'reddit_video' in submission.media:
+        if submission.media['reddit_video'].get('is_gif', False):
+            return TYPE_GIF, submission.media['reddit_video']['fallback_url']
+        return TYPE_VIDEO, submission.media['reddit_video']['fallback_url']
     try:
         if len(submission.crosspost_parent_list) > 0:
             parent_submission_json = submission.crosspost_parent_list[0]
-            if parent_submission_json['is_video'] == True:
-                if 'reddit_video' in parent_submission_json['media']:
-                    if parent_submission_json['media']['reddit_video'].get('is_gif', False):
-                        return TYPE_GIF, parent_submission_json['media']['reddit_video']['fallback_url']
-                    return TYPE_VIDEO, parent_submission_json['media']['reddit_video']['fallback_url']
+            if (
+                parent_submission_json['is_video'] == True
+                and 'reddit_video' in parent_submission_json['media']
+            ):
+                if parent_submission_json['media']['reddit_video'].get('is_gif', False):
+                    return TYPE_GIF, parent_submission_json['media']['reddit_video']['fallback_url']
+                return TYPE_VIDEO, parent_submission_json['media']['reddit_video']['fallback_url']
     except:
         # Not a crosspost
         pass
@@ -128,18 +124,18 @@ def get_url(submission, mp4_instead_gif=True):
     if CONTENT_GIF in url_content:
         if url.endswith('.gif') and mp4_instead_gif:
             # Let's try to find .mp4 file.
-            url_mp4 = url[:-4] + '.mp4'
+            url_mp4 = f'{url[:-4]}.mp4'
             if CONTENT_MP4 == what_is_inside(url_mp4):
                 return TYPE_GIF, url_mp4
         return TYPE_GIF, url
-    
+
     if url.endswith('.gifv'):
         if mp4_instead_gif:
-            url_mp4 = url[:-5] + '.mp4'
+            url_mp4 = f'{url[:-5]}.mp4'
             if CONTENT_MP4 == what_is_inside(url_mp4):
                 return TYPE_GIF, url_mp4
-        if CONTENT_GIF in what_is_inside(url[0:-1]):
-            return TYPE_GIF, url[0:-1]
+        if CONTENT_GIF in what_is_inside(url[:-1]):
+            return TYPE_GIF, url[:-1]
 
     if submission.is_self is True:
         # Self submission with text
@@ -159,7 +155,7 @@ def get_url(submission, mp4_instead_gif=True):
         elif path_parts[1] == 'a':
             # An imgur album
             album = imgur_client.get_album(path_parts[2])
-            story = dict()
+            story = {}
             for num, img in enumerate(album.images):
                 number = num + 1
                 what = TYPE_IMG
@@ -183,11 +179,7 @@ def get_url(submission, mp4_instead_gif=True):
             if not img.animated:
                 return TYPE_IMG, img.link
             else:
-                if mp4_instead_gif:
-                    return TYPE_GIF, img.mp4
-                else:
-                    # return 'gif', img.link
-                    return TYPE_GIF, img.gifv[:-1]
+                return (TYPE_GIF, img.mp4) if mp4_instead_gif else (TYPE_GIF, img.gifv[:-1])
     elif 'gfycat.com' in urlparse(url).netloc:
         rname = re.findall(r'gfycat.com\/(?:detail\/)?(\w*)', url)[0]
         try:
@@ -231,18 +223,11 @@ def clean_after_module(submodule_name=None):
     for filename in os.listdir(TEMP_FOLDER):
         if filename == 'empty.md':
             continue
-        if submodule_name is not None:
-            # Clean after specific
-            if submodule_name[1:] in filename:
-                file_path = os.path.join(TEMP_FOLDER, filename)
-                try:
-                    deleted_file_size = os.path.getsize(file_path)
-                    os.remove(file_path)
-                    total_size += deleted_file_size
-                except FileNotFoundError as e:
-                    pass
-        else:
-            # Clean after all
+        if (
+            submodule_name is not None
+            and submodule_name[1:] in filename
+            or submodule_name is None
+        ):
             file_path = os.path.join(TEMP_FOLDER, filename)
             try:
                 deleted_file_size = os.path.getsize(file_path)
@@ -256,9 +241,7 @@ def clean_after_module(submodule_name=None):
 def md5_sum_from_url(url):
     try:
         r = requests.get(url, stream=True)
-    except InvalidSchema:
-        return None
-    except MissingSchema:
+    except (InvalidSchema, MissingSchema):
         return None
     chunk_counter = 0
     hash_store = hashlib.md5()
@@ -273,7 +256,7 @@ def md5_sum_from_url(url):
 
 
 def weighted_random_subreddit(weights):
-    random_value = random.uniform(0, sum(val for val in weights.values()))
+    random_value = random.uniform(0, sum(weights.values()))
     cumulative_sum = 0.0
     for k, w in weights.items():
         cumulative_sum += w
@@ -323,11 +306,11 @@ class Reddit2TelegramSender(object):
         switched = False
         for i in list_of_words:
             if (len(new_text) + len(i) + 1 < TELEGRAM_CAPTION_LIMIT - 4) and not switched:
-                new_text += i + ' '
+                new_text += f'{i} '
             else:
                 switched = True
-                next_text += ' ' + i
-        return new_text + ' ...', '... ' + next_text
+                next_text += f' {i}'
+        return f'{new_text} ...', f'... {next_text}'
 
     def _split_4096(self, text):
         new_text = text[:4096]
@@ -354,15 +337,12 @@ class Reddit2TelegramSender(object):
             {
                 'channel': channel.lower(),
                 'link': '_NO_',
-                'date': datetime.today().strftime('%Y-%m-%d')
+                'date': datetime.now().strftime('%Y-%m-%d'),
             },
-            {
-                '$inc': {'cnt': 1},
-                '$set': {'ts': datetime.utcnow()}
-            },
+            {'$inc': {'cnt': 1}, '$set': {'ts': datetime.utcnow()}},
             projection={'cnt': True, '_id': False},
             return_document=ReturnDocument.AFTER,
-            upsert=True
+            upsert=True,
         )
 
     def too_much_errors(self, url):
@@ -370,12 +350,7 @@ class Reddit2TelegramSender(object):
             'channel': self.t_channel.lower(),
             'url': url.lower()
         })
-        if result is None:
-            return False
-        elif result['cnt'] >= ERRORS_CNT_LIMIT:
-            return True
-        else:
-            return False
+        return result is not None and result['cnt'] >= ERRORS_CNT_LIMIT
 
     def was_before(self, url):
         result = self.urls.find_one({
@@ -384,10 +359,7 @@ class Reddit2TelegramSender(object):
                 '$regex': url.split('/')[-1]
             }
         })
-        if result is None:
-            return False
-        else:
-            return True
+        return result is not None
 
     def mark_as_was_before(self, url, sent=True):
         self.urls.insert_one({
@@ -460,7 +432,7 @@ class Reddit2TelegramSender(object):
             audio_playlist = m3u8.load(audio_playlist_url)
             segment_0 = audio_playlist.segments[0]
             audio_url = segment_0.absolute_uri
-            audio_filename = filename + '.aac'
+            audio_filename = f'{filename}.aac'
             if not download_file(audio_url, audio_filename):
                 return SupplyResult.DO_NOT_WANT_THIS_SUBMISSION
         except:
@@ -469,7 +441,8 @@ class Reddit2TelegramSender(object):
 
         # Combine it audio and video
         video_with_audio_filename = self._get_file_name('.1.mp4')
-        cmd = 'ffmpeg -i %s -i %s -c:v copy -c:a aac -strict experimental %s -hide_banner -loglevel panic -y' % (filename, audio_filename, video_with_audio_filename)
+        cmd = f'ffmpeg -i {filename} -i {audio_filename} -c:v copy -c:a aac -strict experimental {video_with_audio_filename} -hide_banner -loglevel panic -y'
+
         subprocess.call(cmd, shell=True)
 
         # Telegram will not autoplay big gifs
@@ -478,9 +451,8 @@ class Reddit2TelegramSender(object):
         next_text = ''
         if len(text) > TELEGRAM_CAPTION_LIMIT:
             text, next_text = self._split_1024(text)
-        f = open(video_with_audio_filename, 'rb')
-        self.telegram_bot.send_video(chat_id=self.t_channel, video=f, caption=text, parse_mode=parse_mode)
-        f.close()
+        with open(video_with_audio_filename, 'rb') as f:
+            self.telegram_bot.send_video(chat_id=self.t_channel, video=f, caption=text, parse_mode=parse_mode)
         if len(next_text) > 1:
             short_sleep()
             self.send_text(next_text, disable_web_page_preview=True, parse_mode=parse_mode)
@@ -525,10 +497,16 @@ class Reddit2TelegramSender(object):
                                                 text=new_text,
                                                 disable_web_page_preview=disable_web_page_preview,
                                                 parse_mode=parse_mode)
-            elif len(list_of_words[0]) <= 4096:
+            else:
                 # If first word is less than 4096.
-                words_to_send = list()
-                while (len(list_of_words) > 0) and (sum([len(x) for x in words_to_send]) + len(words_to_send) + len(list_of_words[0]) <= 4096):
+                words_to_send = []
+                while (
+                    len(list_of_words) > 0
+                    and sum(len(x) for x in words_to_send)
+                    + len(words_to_send)
+                    + len(list_of_words[0])
+                    <= 4096
+                ):
                     words_to_send.append(list_of_words.pop(0))
                 self.telegram_bot.send_message(chat_id=self.t_channel,
                                                 text=' '.join(words_to_send),
@@ -562,9 +540,8 @@ class Reddit2TelegramSender(object):
     def send_gallery(self, dict_of_dicts_of_pics, text):
         self.send_text(text)
         long_sleep()
-        cnt = 0
-        for k, dict_of_pics in dict_of_dicts_of_pics.items():
-            list_of_items_in_one_group = list()
+        for cnt, (k, dict_of_pics) in enumerate(dict_of_dicts_of_pics.items(), start=1):
+            list_of_items_in_one_group = []
 
             for item in sorted(dict_of_pics.items(), key=lambda item: item[0]):
                 if item[1]['type'] == 'pic':
@@ -582,7 +559,6 @@ class Reddit2TelegramSender(object):
                 logging.info('Successful gallery sent.')
             except Exception as e:
                 logging.error('Gallery sent failed.')
-            cnt += 1
             long_sleep(cnt + 1)
         return SupplyResult.SUCCESSFULLY
 
@@ -636,14 +612,14 @@ class Reddit2TelegramSender(object):
             num = str(num)
             if magnitude == 0:
                 while (num.endswith('0')) and ('.' in num):
-                    num = num[0:-1]
+                    num = num[:-1]
                 if num.endswith('.'):
-                    num = num[0:-1]
+                    num = num[:-1]
             return '{n}{m}'.format(n=num, m=['', 'k', 'M', 'G', 'T', 'P'][magnitude])
 
         max_selftext_len = kwargs.get('max_selftext_len', -1)
 
-        min_upvotes_limit = kwargs.get('min_upvotes_limit', None)
+        min_upvotes_limit = kwargs.get('min_upvotes_limit')
         if (min_upvotes_limit is not None) and (submission.score < min_upvotes_limit):
             return SupplyResult.SKIP_FOR_NOW
 
@@ -667,17 +643,12 @@ class Reddit2TelegramSender(object):
             **kwargs
         }
 
-        if kwargs.get('nsfw_filter_out', True):
-            # Check if we want to filter out all NSFW submission.
-            if submission.over_18:
-                return SupplyResult.DO_NOT_WANT_THIS_SUBMISSION 
+        if kwargs.get('nsfw_filter_out', True) and submission.over_18:
+            return SupplyResult.DO_NOT_WANT_THIS_SUBMISSION 
 
-        if kwargs.get('check_dups', False):
-            # Check if there is a duplicate
-            # If not — save content
-            if self.dup_check_and_mark(url):
-                # There is a duplicate
-                return SupplyResult.DO_NOT_WANT_THIS_SUBMISSION
+        if kwargs.get('check_dups', False) and self.dup_check_and_mark(url):
+            # There is a duplicate
+            return SupplyResult.DO_NOT_WANT_THIS_SUBMISSION
 
         if what == TYPE_GIF:
             what_to_do = kwargs.get('gif', True)

@@ -24,7 +24,7 @@ def send_post(submission, r2t):
     what, url, ext = get_url(submission)
     title = submission.title
     link = submission.shortlink
-    text = '{}\n{}'.format(title, link)
+    text = f'{title}\n{link}'
 
     if what in ('gif', 'img'):
         r2t.send_text('🔞🔞🔞🔞🔞🔞')
@@ -32,11 +32,11 @@ def send_post(submission, r2t):
         success = r2t.send_gif_img(what, url, ext, text)
         if success is False:
             return False
-        for i in range(4):
+        for _ in range(4):
             time.sleep(3.14159 / 2.718281828)
             r2t.send_text('🔞🔞🔞🔞🔞🔞')
             time.sleep(3.14159 / 2.718281828)
             r2t.send_text('👆👆👆👆👆👆')
-        return True    
+        return True
     else:
         return False

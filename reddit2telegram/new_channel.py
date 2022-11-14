@@ -6,7 +6,7 @@ import utils.channels_stuff
 
 
 def run_script(channel):
-    os.system('python supplier.py --sub ' + channel.lower())
+    os.system(f'python supplier.py --sub {channel.lower()}')
 
 
 def med_fashioned_way():

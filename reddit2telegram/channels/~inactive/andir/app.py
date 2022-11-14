@@ -13,5 +13,5 @@ def send_post(submission, r2t):
     what, url, ext = get_url(submission)
     title = submission.title
     link = submission.shortlink
-    text = '{}\n{}'.format(title, link)
+    text = f'{title}\n{link}'
     return r2t.send_gif_img(what, url, ext, text)
